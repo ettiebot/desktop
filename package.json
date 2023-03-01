@@ -1,12 +1,57 @@
 {
-  "name": "electron-quick-start",
-  "version": "1.0.0",
-  "description": "A minimal Electron application",
-  "main": "main.js",
+  "name": "ettie",
+  "version": "0.0.1",
+  "description": "Smart personal assistant",
+  "author": "ettie.uk",
   "scripts": {
-    "start": "electron ."
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "serve": "vue-cli-service serve"
   },
-  "repository": "https://github.com/electron/electron-quick-start",
+  "main": "background.js",
+  "icon": "build/favicon.ico",
+  "productName": "Ettie",
+  "dependencies": {
+    "@types/pako": "^2.0.0",
+    "animate.css": "^4.1.1",
+    "animejs": "^3.2.1",
+    "axios": "^1.3.2",
+    "bip39": "^3.1.0",
+    "browserify-zlib": "^0.2.0",
+    "core-js": "^3.8.3",
+    "electron-shutdown-command": "^2.0.1",
+    "howler": "^2.2.3",
+    "loudness": "^0.4.1",
+    "msgpack5": "^6.0.2",
+    "node-window-manager": "^2.2.4",
+    "pako": "^2.1.0",
+    "path-browserify": "^1.0.1",
+    "socket.io-client": "^4.6.0",
+    "update-electron-app": "^2.0.1",
+    "vue": "^3.2.13",
+    "websocket": "^1.0.34"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "electron": "^23.0.0",
+    "electron-devtools-installer": "^3.1.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "prettier": "^2.4.1",
+    "sass": "^1.32.7",
+    "sass-loader": "^12.0.0",
+    "vue-cli-plugin-electron-builder": "~2.1.1"
+  },
   "keywords": [
     "Electron",
     "quick",
@@ -14,9 +59,6 @@
     "tutorial",
     "demo"
   ],
-  "author": "GitHub",
   "license": "CC0-1.0",
-  "devDependencies": {
-    "electron": "^23.0.0"
-  }
+  "repository": "https://github.com/ettiebot/desktop"
 }

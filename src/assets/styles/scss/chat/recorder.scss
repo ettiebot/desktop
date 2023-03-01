@@ -1,0 +1,103 @@
+.bottom-parent {
+  position: sticky;
+  margin-top: 18px;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  user-select: none;
+
+  &.voicing .mic-button {
+    transition: transform 0.1s;
+    background: #ededed;
+    span {
+      color: #d32727;
+    }
+  }
+
+  &.processing .mic-button {
+    animation: processing 0.6s ease-in-out infinite alternate;
+    cursor: wait;
+    opacity: 0.5;
+  }
+
+  &.unready .mic-button {
+    cursor: default;
+    opacity: 0.5;
+  }
+}
+
+.mic-button {
+  span {
+    font-size: 35px;
+    padding-top: 2px;
+    padding-left: 1px;
+  }
+  height: 80px;
+  width: 80px;
+  color: white;
+  background: linear-gradient(
+    to right,
+    rgb(133 82 255 / 73%),
+    rgb(23 41 255 / 75%)
+  );
+  margin-bottom: 30px;
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  animation: backInUp;
+  animation-duration: 1s;
+  animation-timing-function: ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+  .spinner-border {
+    width: 65px;
+    height: 65px;
+    font-size: 45px;
+  }
+  .material-icons {
+    font-size: 45px;
+  }
+}
+
+@keyframes moveFromLeft {
+  0% {
+    transform: translate(-40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes moveFromRight {
+  0% {
+    transform: translate(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes voicing {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.09);
+  }
+}
+
+@keyframes processing {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.03);
+  }
+}
