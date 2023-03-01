@@ -42,6 +42,7 @@ export default reactive({
     this.socket.onopen = this.onConnection.bind(this);
     this.socket.onmessage = this.onMessage.bind(this);
     this.socket.onclose = this.onDisconnection.bind(this);
+    this.socket.onerror = this.onDisconnection.bind(this);
   },
 
   onConnection() {
@@ -51,6 +52,8 @@ export default reactive({
   onDisconnection() {
     console.log("disconnected");
     recorderStore.state = "unready";
+
+    setTimeout(() => this.init(), 3000);
   },
 
   onError(e) {

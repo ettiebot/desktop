@@ -26,7 +26,8 @@ const { platform } = process;
 const feedTag = "dev";
 const getInstallerURL = (ext) =>
   `https://github.com/ettiebot/desktop/releases/download/${feedTag}/setup.${ext}`;
-const getUpdateFilePath = (ext) => `${join(app.getAppPath(), "update")}.${ext}`;
+const getUpdateFilePath = (ext) =>
+  `${join(process.resourcesPath, "update")}.${ext}`;
 const manifestURL =
   "https://raw.githubusercontent.com/ettiebot/desktop/master/package.json";
 const platformFormat = {
@@ -237,6 +238,11 @@ app.on("ready", async () => {
       label: "Выход",
       type: "normal",
       click: () => app.quit(),
+    },
+    { type: "separator" },
+    {
+      label: "v" + app.getVersion(),
+      type: "normal",
     },
   ]);
   tray.setContextMenu(contextMenu);
