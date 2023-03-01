@@ -31,7 +31,7 @@ class RecognitionAI {
     await this.transferRecognizer.train({
       epochs: 1500,
       validationSplit: 0.1,
-      fineTuningEpochs: 200,
+      fineTuningEpochs: 500,
       callback: {
         onEpochEnd: async (epoch, logs) => {
           window.onEpochChange(epoch, 1500);
@@ -42,6 +42,7 @@ class RecognitionAI {
       },
       fineTuningCallback: {
         onEpochEnd: async (epoch, logs) => {
+          window.onEpochChange(epoch, 500);
           console.log(epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc);
         },
       },
@@ -75,7 +76,7 @@ class RecognitionAI {
 
       const mostLikelyWord = words[mostLikelyResultIndex];
 
-      if (result.scores[mostLikelyResultIndex] < 0.98) return;
+      if (result.scores[mostLikelyResultIndex] < 0.97) return;
 
       console.log(mostLikelyWord, result.scores[mostLikelyResultIndex]);
 

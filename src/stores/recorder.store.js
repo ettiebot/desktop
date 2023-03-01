@@ -34,12 +34,6 @@ export default reactive({
     audioBitsPerSecond: 48000,
   },
 
-  onWakeup: () => void 0,
-
-  wakeup(word) {
-    this.onWakeup(word);
-  },
-
   async fetchMicrophone() {
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {

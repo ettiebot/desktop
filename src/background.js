@@ -242,6 +242,10 @@ app.on("ready", async () => {
   tray.setContextMenu(contextMenu);
   tray.on("click", () => contextMenu.items[0].click());
 
+  ipcMain.on("showWindow", () => {
+    chatWin.show();
+    chatWin.moveTop();
+  });
   ipcMain.on("changeView", (e, data) => changeView(data));
 });
 

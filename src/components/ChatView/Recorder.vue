@@ -19,6 +19,7 @@
 </template>
 <script>
 import recorderStore from "@/stores/recorder.store";
+const ipcRenderer = window.require("electron").ipcRenderer;
 
 export default {
   setup() {
@@ -51,6 +52,7 @@ export default {
     await this.rai.loadExamples();
     // Listen for mention
     await this.rai.listen(() => {
+      ipcRenderer.postMessage("showWindow");
       recorderStore.startRecording();
     });
   },
