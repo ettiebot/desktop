@@ -20,21 +20,12 @@ import { join } from "path";
 import childProcess from "child_process";
 import { createWriteStream, existsSync } from "fs";
 
+const branch = "dev";
+const dlServerURL = "https://dl.ettie.uk";
+const versionsURL = `${dlServerURL}/versions.json`;
+
 const isDevelopment = process.env.NODE_ENV !== "production";
 const { platform } = process;
-
-const feedTag = "dev";
-const getInstallerURL = (ext) =>
-  `https://github.com/ettiebot/desktop/releases/download/${feedTag}/setup.${ext}`;
-const getUpdateFilePath = (ext) =>
-  `${join(process.resourcesPath, "update")}.${ext}`;
-const manifestURL =
-  "https://raw.githubusercontent.com/ettiebot/desktop/master/package.json";
-const platformFormat = {
-  win32: "exe",
-  darwin: "dmg",
-  linux: "AppImage",
-};
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -107,44 +98,73 @@ async function createWindow(params = {}) {
 }
 
 async function downloadDeps() {
-  if (platform === "win32") {
-    const loudnessWinDepURL = `https://github.com/ettiebot/desktop/releases/download/${feedTag}/sound.dependency.exe`;
-    const loudnessWinDepPath = join(
-      process.resourcesPath,
-      "sound.dependency.exe"
-    );
-    if (!existsSync(loudnessWinDepPath)) {
-      console.info("Downloading sound dependency...");
-      await downloadFile(loudnessWinDepURL, loudnessWinDepPath);
-      console.info("Sound dependency successfully downloaded.");
+  try {
+    // Download dependencies for Windows
+    const { data: versions } = await axios.get(versionsURL, {
+      responseType: "json",
+    });
+
+    const verBranch = versions[branch];
+    const verPlatform = verBranch[platform];
+    if (!verPlatform) return;
+
+    console.info("Found dependencies: ", verPlatform.deps.join(", "));
+
+    for (const dep of verPlatform.deps) {
+      const depPath = join(process.resourcesPath, dep);
+      if (!existsSync(depPath)) {
+        await downloadFile(`${dlServerURL}/${branch}/deps/${dep}`, depPath);
+        console.info("Downloaded dependency: ", dep);
+      }
     }
+  } catch (err) {
+    console.error("Failed to download dependencies: ", err);
   }
 }
 
 async function checkForUpdates() {
-  const { data } = await axios.get(manifestURL);
+  const { data: versions } = await axios.get(versionsURL, {
+    responseType: "json",
+  });
 
-  if (data.version !== app.getVersion()) {
-    console.log("New version available");
+  const verBranch = versions[branch];
+  const version = verBranch._version;
+  const verPlatform = verBranch[platform];
+  console.info(verPlatform, version, verBranch);
 
-    const buttonIndex = dialog.showMessageBoxSync({
-      message: "Доступно обновление для Ettie. Обновить сейчас?",
-      buttons: ["Да", "Нет"],
-    });
+  if (verPlatform) {
+    // If the latest release is not the current version
+    if (version !== app.getVersion()) {
+      try {
+        console.log(`New version available, downloading v${version}...`);
 
-    if (buttonIndex === 0) {
-      console.info("Downloading an update...");
+        // Download the installer
+        const assetLocalPath = join(process.resourcesPath, verPlatform.name);
+        await downloadFile(
+          `${dlServerURL}/${branch}/${version}/${verPlatform.name}`,
+          assetLocalPath
+        );
 
-      // Windows
-      const updateFilePath = getUpdateFilePath(platformFormat[platform]);
-      await downloadFile(
-        getInstallerURL(platformFormat[platform]),
-        updateFilePath
-      );
-      console.info("Installing update...");
-      childProcess.execFileSync(updateFilePath);
+        // Download dependencies
+        await downloadDeps();
+
+        const buttonIndex = dialog.showMessageBoxSync({
+          message: "Доступно обновление для Ettie. Обновить сейчас?",
+          buttons: ["Да", "Нет"],
+        });
+
+        if (buttonIndex === 0) {
+          console.info("Installing update...");
+          childProcess.execFileSync(assetLocalPath);
+        }
+      } catch (err) {
+        console.error("Failed to download update: ", err);
+        dialog.showErrorBox("Не удалось скачать обновление :С", err.toString());
+      }
     }
   }
+
+  setInterval(() => checkForUpdates(), 120 * 1000);
 }
 
 app.on("window-all-closed", () => {
@@ -165,8 +185,6 @@ app.on("ready", async () => {
       console.error("Vue Devtools failed to install:", e.toString());
     }
   }
-
-  await downloadDeps();
 
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
@@ -253,6 +271,9 @@ app.on("ready", async () => {
     chatWin.moveTop();
   });
   ipcMain.on("changeView", (e, data) => changeView(data));
+
+  await checkForUpdates();
+  await downloadDeps();
 });
 
 // Exit cleanly on request from parent process in development mode.
@@ -268,6 +289,4 @@ if (isDevelopment) {
       app.quit();
     });
   }
-} else {
-  setInterval(() => checkForUpdates(), 120 * 1000);
 }
