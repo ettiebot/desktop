@@ -13,7 +13,7 @@ import {
 } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
-import pcPower from "electron-shutdown-command";
+import * as pcPower from "electron-shutdown-command";
 import loudness from "../loudness";
 import axios from "axios";
 import { join } from "path";
@@ -190,7 +190,8 @@ app.on("ready", async () => {
   const { width, height } = primaryDisplay.workAreaSize;
 
   ipcMain.on("pcPower", (e, action) => {
-    pcPower[action]();
+    if (action === "shutdown") pcPower.shutdown();
+    else if (action === "reboot") pcPower.reboot();
   });
 
   ipcMain.on("sound", async (e, { a, p }) => {
