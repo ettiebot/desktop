@@ -18,6 +18,10 @@ module.exports = defineConfig({
       appId: "com.ettiebot.ettie",
       copyright: "Copyright © 2023 ettie.uk",
       extraResources: ["loudness/**/*"],
+      mac: {
+        category: "public.app-category.entertainment",
+        target: "default",
+      },
     },
   },
 });
