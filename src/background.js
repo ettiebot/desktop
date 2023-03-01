@@ -18,7 +18,7 @@ import loudness from "../loudness";
 import axios from "axios";
 import { join } from "path";
 import childProcess from "child_process";
-import { createWriteStream, existsSync } from "fs";
+import { createWriteStream, existsSync, unlinkSync } from "fs";
 
 const branch = "dev";
 const dlServerURL = "https://dl.ettie.uk";
@@ -33,6 +33,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 export async function downloadFile(fileUrl, outputLocationPath) {
+  if (existsSync(outputLocationPath)) unlinkSync(outputLocationPath);
   const writer = createWriteStream(outputLocationPath);
 
   return axios
@@ -155,7 +156,12 @@ async function checkForUpdates() {
 
         if (buttonIndex === 0) {
           console.info("Installing update...");
-          childProcess.execFileSync(assetLocalPath);
+          const subprocess = childProcess.spawn(assetLocalPath, {
+            detached: true,
+            stdio: "ignore",
+          });
+          subprocess.unref();
+          app.quit();
         }
       } catch (err) {
         console.error("Failed to download update: ", err);
