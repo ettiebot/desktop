@@ -14,18 +14,26 @@ import {
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 import pcPower from "electron-shutdown-command";
+import loudness from "../loudness";
 import axios from "axios";
-import { join } from "path-browserify";
+import { join } from "path";
 import childProcess from "child_process";
-import { createWriteStream } from "fs";
+import { createWriteStream, existsSync } from "fs";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+const { platform } = process;
+
 const feedTag = "dev";
 const getInstallerURL = (ext) =>
   `https://github.com/ettiebot/desktop/releases/download/${feedTag}/setup.${ext}`;
 const getUpdateFilePath = (ext) => `${join(app.getAppPath(), "update")}.${ext}`;
 const manifestURL =
   "https://raw.githubusercontent.com/ettiebot/desktop/master/package.json";
+const platformFormat = {
+  win32: "exe",
+  darwin: "dmg",
+  linux: "AppImage",
+};
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -97,6 +105,21 @@ async function createWindow(params = {}) {
   return win;
 }
 
+async function downloadDeps() {
+  if (platform === "win32") {
+    const loudnessWinDepURL = `https://github.com/ettiebot/desktop/releases/download/${feedTag}/sound.dependency.exe`;
+    const loudnessWinDepPath = join(
+      process.resourcesPath,
+      "sound.dependency.exe"
+    );
+    if (!existsSync(loudnessWinDepPath)) {
+      console.info("Downloading sound dependency...");
+      await downloadFile(loudnessWinDepURL, loudnessWinDepPath);
+      console.info("Sound dependency successfully downloaded.");
+    }
+  }
+}
+
 async function checkForUpdates() {
   const { data } = await axios.get(manifestURL);
 
@@ -112,8 +135,11 @@ async function checkForUpdates() {
       console.info("Downloading an update...");
 
       // Windows
-      const updateFilePath = getUpdateFilePath("exe");
-      await downloadFile(getInstallerURL("exe"), updateFilePath);
+      const updateFilePath = getUpdateFilePath(platformFormat[platform]);
+      await downloadFile(
+        getInstallerURL(platformFormat[platform]),
+        updateFilePath
+      );
       console.info("Installing update...");
       childProcess.execFileSync(updateFilePath);
     }
@@ -139,11 +165,29 @@ app.on("ready", async () => {
     }
   }
 
+  await downloadDeps();
+
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
 
   ipcMain.on("pcPower", (e, action) => {
     pcPower[action]();
+  });
+
+  ipcMain.on("sound", async (e, { a, p }) => {
+    switch (a) {
+      case "set":
+        if (p <= 0)
+          await loudness.setVolume((await loudness.getVolume()) - Math.abs(p));
+        else await loudness.setVolume((await loudness.getVolume()) + p);
+        break;
+      case "setTotal":
+        await loudness.setVolume(p);
+        break;
+      case "mute":
+        await loudness.setMuted(p);
+        break;
+    }
   });
 
   const welcomeWin = await createWindow({

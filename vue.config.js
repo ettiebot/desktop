@@ -17,6 +17,7 @@ module.exports = defineConfig({
     electronBuilder: {
       appId: "com.ettiebot.ettie",
       copyright: "Copyright © 2023 ettie.uk",
+      extraResources: ["loudness/**/*"],
     },
   },
 });

@@ -1,6 +1,6 @@
 {
   "name": "ettie",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Smart personal assistant",
   "author": "ettie.uk",
   "scripts": {
@@ -25,13 +25,11 @@
     "core-js": "^3.8.3",
     "electron-shutdown-command": "^2.0.1",
     "howler": "^2.2.3",
-    "loudness": "^0.4.1",
     "msgpack5": "^6.0.2",
     "node-window-manager": "^2.2.4",
     "pako": "^2.1.0",
     "path-browserify": "^1.0.1",
     "socket.io-client": "^4.6.0",
-    "update-electron-app": "^2.0.1",
     "vue": "^3.2.13",
     "websocket": "^1.0.34"
   },

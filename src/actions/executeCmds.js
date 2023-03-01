@@ -1,5 +1,4 @@
 import soundsStore from "@/stores/sounds.store";
-const loudness = window.require("loudness");
 const ipcRenderer = window.require("electron").ipcRenderer;
 
 const searchUrls = {
@@ -55,32 +54,24 @@ export async function executeSoundCmd(act, opts) {
     // Volume at ..%
     if (percentString) {
       const percent = Number(percentString.match(/\d/g).join(""));
-      if (percent > 0) {
-        await loudness.setMuted(false);
-        await loudness.setVolume(percent);
-      } else if (percent === 0) {
-        await loudness.setMuted(true);
-      }
+      ipcRenderer.postMessage("sound", { a: "setTotal", p: percent });
     } else {
       console.log(volAction);
       switch (volAction) {
         case "on":
-          await loudness.setMuted(false);
+          ipcRenderer.postMessage("sound", { a: "mute", p: false });
           break;
         case "off":
-          await loudness.setMuted(true);
+          ipcRenderer.postMessage("sound", { a: "mute", p: true });
           break;
         case "up":
-          await loudness.setMuted(false);
-          await loudness.setVolume((await loudness.getVolume()) + 20);
+          ipcRenderer.postMessage("sound", { a: "set", p: 20 });
           break;
         case "down":
-          await loudness.setMuted(false);
-          await loudness.setVolume((await loudness.getVolume()) - 20);
+          ipcRenderer.postMessage("sound", { a: "set", p: -20 });
           break;
         case "max":
-          await loudness.setMuted(false);
-          await loudness.setVolume(100);
+          ipcRenderer.postMessage("sound", { a: "setTotal", p: 100 });
           break;
       }
     }
