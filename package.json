@@ -1,6 +1,6 @@
 {
   "name": "ettie",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Smart personal assistant",
   "author": "ettie.uk",
   "scripts": {
@@ -16,6 +16,8 @@
   "icon": "build/favicon.ico",
   "productName": "Ettie",
   "dependencies": {
+    "@sentry/browser": "^7.39.0",
+    "@sentry/tracing": "^7.39.0",
     "@types/pako": "^2.0.0",
     "animate.css": "^4.1.1",
     "animejs": "^3.2.1",
