@@ -33,10 +33,8 @@ export default {
   },
   methods: {
     async trainWord(word) {
-      this.collect("_background_noise_");
-
-      for (let i = 0; i < 5; i++) {
-        this.actionName = 5 - i;
+      for (let i = 0; i < 4; i++) {
+        this.actionName = 4 - i;
         await later(1000);
       }
 
@@ -45,13 +43,15 @@ export default {
     },
 
     async startTrain() {
-      this.actionName = "Обучаюсь...";
-
+      this.actionName = "Подготовка к обучению...";
       window.onEpochChange = (e, m) => {
         this.trainPerc = Math.round((e / m) * 100);
       };
 
       await this.collect("_background_noise_");
+      await this.collect("_background_noise_");
+
+      this.actionName = "Обучаюсь...";
       await this.rai.train();
     },
 
