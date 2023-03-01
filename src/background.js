@@ -9,19 +9,53 @@ import {
   Tray,
   nativeImage,
   Menu,
+  dialog,
 } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
-import updateElectronApp from "update-electron-app";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 import pcPower from "electron-shutdown-command";
-const isDevelopment = process.env.NODE_ENV !== "production";
+import axios from "axios";
+import { join } from "path-browserify";
+import childProcess from "child_process";
+import { createWriteStream } from "fs";
 
-updateElectronApp();
+const isDevelopment = process.env.NODE_ENV !== "production";
+const feedTag = "dev";
+const getInstallerURL = (ext) =>
+  `https://github.com/ettiebot/desktop/releases/download/${feedTag}/setup.${ext}`;
+const getUpdateFilePath = (ext) => `${join(app.getAppPath(), "update")}.${ext}`;
+const manifestURL =
+  "https://raw.githubusercontent.com/ettiebot/desktop/master/package.json";
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } },
 ]);
+
+export async function downloadFile(fileUrl, outputLocationPath) {
+  const writer = createWriteStream(outputLocationPath);
+
+  return axios
+    .get(fileUrl, {
+      responseType: "stream",
+    })
+    .then((response) => {
+      return new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        let error = null;
+        writer.on("error", (err) => {
+          error = err;
+          writer.close();
+          reject(err);
+        });
+        writer.on("close", () => {
+          if (!error) {
+            resolve(true);
+          }
+        });
+      });
+    });
+}
 
 async function createWindow(params = {}) {
   // Create the browser window.
@@ -61,6 +95,29 @@ async function createWindow(params = {}) {
   }
 
   return win;
+}
+
+async function checkForUpdates() {
+  const { data } = await axios.get(manifestURL);
+
+  if (data.version !== app.getVersion()) {
+    console.log("New version available");
+
+    const buttonIndex = dialog.showMessageBoxSync({
+      message: "Доступно обновление для Ettie. Обновить сейчас?",
+      buttons: ["Да", "Нет"],
+    });
+
+    if (buttonIndex === 0) {
+      console.info("Downloading an update...");
+
+      // Windows
+      const updateFilePath = getUpdateFilePath("exe");
+      await downloadFile(getInstallerURL("exe"), updateFilePath);
+      console.info("Installing update...");
+      childProcess.execFileSync(updateFilePath);
+    }
+  }
 }
 
 app.on("window-all-closed", () => {
@@ -157,4 +214,6 @@ if (isDevelopment) {
       app.quit();
     });
   }
+} else {
+  setInterval(() => checkForUpdates(), 120 * 1000);
 }
