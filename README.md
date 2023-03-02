@@ -11,4 +11,8 @@
 ## Download (dev build)
 - [Windows](https://github.com/ettiebot/desktop/releases/download/dev/setup.exe)
 - macOS soon
-- Linux soon
+- [Ubuntu](https://snapcraft.io/ettie)
+
+<a href="https://snapcraft.io/ettie">
+  <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+</a>
