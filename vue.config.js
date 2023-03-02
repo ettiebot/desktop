@@ -20,7 +20,7 @@ module.exports = defineConfig({
       extraResources: ["loudness/**/*"],
       mac: {
         category: "public.app-category.entertainment",
-        target: "default",
+        target: "pkg",
       },
     },
   },

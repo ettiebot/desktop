@@ -52,18 +52,17 @@
   },
   "overrides": {
     "vue-cli-plugin-electron-builder": {
-      "electron-builder": "^23.0.3"
+      "electron-builder": "^23.6.0"
     }
   },
   "resolutions": {
-    "electron-builder": "23.0.3"
+    "electron-builder": "23.6.0"
   },
   "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
+    "GPT-3",
+    "ai",
+    "assistant",
+    "chatbot"
   ],
   "license": "CC0-1.0",
   "repository": "https://github.com/ettiebot/desktop"
