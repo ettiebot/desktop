@@ -81,9 +81,11 @@ async function createWindow(params = {}) {
     return { action: "deny" };
   });
 
-  win.setAppDetails({
-    appId: "ettie-client",
-  });
+  if (platform === "win32") {
+    win.setAppDetails({
+      appId: "ettie-client",
+    });
+  }
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
