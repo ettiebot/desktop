@@ -13,8 +13,8 @@ export default reactive({
   btnScale: "scale(1)",
 
   speechDetectConfig: {
-    threshold: -80,
-    sendVoiceTimeout: 2000,
+    threshold: -83,
+    sendVoiceTimeout: 500,
   },
 
   visualizerConfig: {
@@ -89,28 +89,30 @@ export default reactive({
     analyser.maxDecibels = this.visualizerConfig.maxDecibels;
     analyser.smoothingTimeConstant = this.visualizerConfig.smoothTime;
     audioSource.connect(analyser);
+    this.volumeCallback(analyser);
+  },
+
+  volumeCallback(analyser) {
     const volumes = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(volumes);
+    let volumeSum = 0;
+    for (const volume of volumes) volumeSum += volume;
+    const averageVolume = volumeSum / volumes.length;
+    let scale = 0.9 + (averageVolume * 100) / 127 / 100;
 
-    const volumeCallback = () => {
-      analyser.getByteFrequencyData(volumes);
-      let volumeSum = 0;
-      for (const volume of volumes) volumeSum += volume;
-      const averageVolume = volumeSum / volumes.length;
-      let scale = 0.9 + (averageVolume * 100) / 127 / 100;
+    if (scale < 0.9) {
+      scale = 0.9;
+    } else if (scale > 1.18) {
+      scale = 1.18;
+    }
 
-      if (scale < 0.9) {
-        scale = 0.9;
-      } else if (scale > 1.18) {
-        scale = 1.18;
-      }
-
-      this.btnScale = `scale(${scale})`;
-      if (this.state === "recording")
-        setTimeout(volumeCallback, this.visualizerConfig.timerFreq);
-      else this.btnScale = `scale(1)`;
-    };
-
-    volumeCallback();
+    this.btnScale = `scale(${scale})`;
+    if (this.state === "recording")
+      setTimeout(
+        () => this.volumeCallback(analyser),
+        this.visualizerConfig.timerFreq
+      );
+    else this.btnScale = `scale(1)`;
   },
 
   async startRecording() {
@@ -133,9 +135,13 @@ export default reactive({
 
   async onStopRecording() {
     const blob = this.recorder.getBlob();
-    this.state = "processing";
     soundsStore.play("rec.stop");
     const buffer = await new Response(blob).arrayBuffer();
-    await serverStore.sendVoice(buffer);
+    if (buffer.byteLength > 6000) {
+      this.state = "processing";
+      await serverStore.sendVoice(buffer);
+    } else {
+      this.state = null;
+    }
   },
 });

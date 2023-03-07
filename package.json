@@ -1,6 +1,6 @@
 {
   "name": "ettie",
-  "version": "2023.0302.3",
+  "version": "2023.307.1",
   "description": "Smart personal assistant",
   "author": "ettie.uk",
   "scripts": {
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
+    "@types/websocket": "^1.0.5",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
