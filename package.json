@@ -10,7 +10,8 @@
     "postuninstall": "electron-builder install-app-deps",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "serve": "vue-cli-service serve"
+    "serve": "vue-cli-service serve",
+    "commit": "git push && git push --tags"
   },
   "main": "background.js",
   "icon": "build/favicon.ico",
