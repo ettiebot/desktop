@@ -18,6 +18,9 @@ export default {
   },
   created() {
     configStore.fetchConfig();
+    configStore.$ = this.$;
+    if (configStore.config?.language)
+      this.$i18n.locale = configStore.config?.language;
     if (!configStore.config?.token) windowStore.changeView({ view: "welcome" });
     else windowStore.changeView({ view: "chat" });
   },

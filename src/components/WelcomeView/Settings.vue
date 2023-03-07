@@ -1,28 +1,8 @@
 <template>
   <div class="d-flex flex-column align-items-center">
     <div class="pb-5"><img src="@/assets/logo.svg" width="200" /></div>
-    <div v-if="stage === 0" style="min-width: 200px">
-      <div class="mb-2">
-        <select class="form-select" v-model="welcomeViewStore.language">
-          <option value="" selected>Выбери язык</option>
-          <option value="ru">Русский</option>
-          <option value="en">English</option>
-          <option value="ua">Українська</option>
-        </select>
-      </div>
-      <div>
-        <button
-          type="button"
-          class="btn btn-light"
-          style="width: 100%"
-          @click="changeStage(1)"
-        >
-          Далее
-        </button>
-      </div>
-    </div>
-    <div v-if="stage === 1" style="min-width: 100px; max-width: 400px">
-      <h4 style="text-align: center">Выбери микрофон</h4>
+    <div v-if="stage === 0" style="min-width: 100px; max-width: 400px">
+      <h4 style="text-align: center">{{ $t("settings.chooseMic") }}</h4>
       <div
         class="mb-2"
         v-for="device in hardwareStore.micDevices"
@@ -47,13 +27,14 @@
           type="button"
           class="btn btn-light"
           style="width: 100%"
-          @click="changeStage(2)"
+          @click="changeStage(1)"
+          :disabled="!micDevice"
         >
-          Далее
+          {{ $t("btns.next") }}
         </button>
       </div>
     </div>
-    <div v-if="stage === 2" style="min-width: 200px">
+    <div v-if="stage === 1" style="min-width: 200px">
       <div class="mb-2">
         <div class="form-check">
           <input
@@ -62,10 +43,12 @@
             value=""
             v-model="welcomeViewStore.useTranslate"
           />
-          <label class="form-check-label"> Использовать переводчик </label>
+          <label class="form-check-label">
+            {{ $t("settings.useTranslate") }}
+          </label>
         </div>
         <div class="form-text">
-          <span>Чтобы я могла понимать тебя лучше</span>
+          <span>{{ $t("settings.useTranslateExpl") }}</span>
         </div>
       </div>
       <div class="mb-2">
@@ -76,10 +59,12 @@
             value=""
             v-model="welcomeViewStore.useHistory"
           />
-          <label class="form-check-label"> Использовать историю </label>
+          <label class="form-check-label">
+            {{ $t("settings.useHistory") }}
+          </label>
         </div>
         <div class="form-text">
-          <span>Чтобы я знала, о чём мы говорили ранее</span>
+          <span>{{ $t("settings.useHistoryExpl") }}</span>
         </div>
       </div>
       <div>
@@ -89,7 +74,7 @@
           style="width: 100%"
           @click="finishSettings"
         >
-          Далее
+          {{ $t("btns.next") }}
         </button>
       </div>
     </div>
@@ -115,7 +100,7 @@ export default {
 
   watch: {
     stage() {
-      if (this.stage === 2) {
+      if (this.stage === 1) {
         hardwareStore.setMicDevice(this.micDevice);
       }
     },
@@ -123,10 +108,7 @@ export default {
 
   methods: {
     changeStage(stage) {
-      if (!welcomeViewStore.language || welcomeViewStore.language === "")
-        return;
       this.stage = stage;
-      console.log(hardwareStore.micDevice);
     },
 
     finishSettings() {

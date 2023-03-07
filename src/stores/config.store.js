@@ -1,15 +1,28 @@
-import localStorageKeys from "@/consts/localStorageKeys";
 import { reactive } from "vue";
+const fs = window.require("fs");
+
+const resourcesPath = window.process.argv
+  .find((d) => d.includes("resources-path"))
+  .split("=")[1];
+const configPath = (resourcesPath || ".") + "/config.json";
 
 export default reactive({
   config: null,
+  $: null,
 
   fetchConfig() {
-    const config = localStorage.getItem(localStorageKeys.config);
-    this.config = config ? JSON.parse(config) : null;
+    try {
+      this.config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    } catch (_) {
+      //
+    }
   },
 
   saveConfig() {
-    localStorage.setItem(localStorageKeys.config, JSON.stringify(this.config));
+    try {
+      fs.writeFileSync(configPath, JSON.stringify(this.config));
+    } catch (_) {
+      //
+    }
   },
 });

@@ -1,6 +1,6 @@
 {
   "name": "ettie",
-  "version": "2023.307.2",
+  "version": "2023.307.3",
   "description": "Smart personal assistant",
   "author": "ettie.uk",
   "scripts": {
@@ -30,6 +30,7 @@
     "path-browserify": "^1.0.1",
     "socket.io-client": "^4.6.0",
     "vue": "^3.2.13",
+    "vue-i18n": "^9.2.2",
     "websocket": "^1.0.34"
   },
   "devDependencies": {

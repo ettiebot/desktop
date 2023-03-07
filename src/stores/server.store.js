@@ -99,12 +99,12 @@ export default reactive({
     switch (e) {
       case "no_results":
         this.data.history.push({
-          text: "Я не поняла, что ты сказал(-а). Попробуй ещё раз.",
+          text: configStore.$("errors.noResults"),
         });
         break;
       default:
         this.data.history.push({
-          text: "Произошла неизвестная ошибка. Попробуй ещё раз.",
+          text: configStore.$("errors.unknown"),
         });
         throw new Error(e);
     }

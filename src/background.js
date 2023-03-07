@@ -18,7 +18,9 @@ import loudness from "../loudness";
 import axios from "axios";
 import { join } from "path";
 import childProcess from "child_process";
-import { createWriteStream, existsSync, unlinkSync } from "fs";
+import { createWriteStream, existsSync, readFileSync, unlinkSync } from "fs";
+import { resourcesPath } from "process";
+import lang from "./lang";
 
 const branch = "dev";
 const dlServerURL = "https://dl.ettie.uk";
@@ -39,9 +41,21 @@ protocol.registerSchemesAsPrivileged([
 
 class Ettie {
   constructor() {
-    this.display = screen.getPrimaryDisplay();
     this.wins = {};
+    this.display = screen.getPrimaryDisplay();
+    this.config = this.readConfig();
     this.onAppReady();
+  }
+
+  readConfig() {
+    try {
+      console.log(join(resourcesPath, "config.json"));
+      return JSON.parse(
+        readFileSync(join(resourcesPath, "config.json"), "utf8")
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   async downloadFile(fileUrl, outputLocationPath) {
@@ -142,6 +156,8 @@ class Ettie {
   }
 
   async checkForUpdates() {
+    const lp = this.config ? lang[this.config.language] : lang["en"];
+
     const { data: versions } = await axios.get(versionsURL, {
       responseType: "json",
     });
@@ -182,25 +198,25 @@ class Ettie {
           await this.downloadDeps();
 
           const buttonIndex = dialog.showMessageBoxSync({
-            message: "Доступно обновление для Ettie. Обновить сейчас?",
-            buttons: ["Да", "Нет"],
+            message: lp.updater.available,
+            buttons: [lp.updater.yes, lp.updater.no],
           });
 
           if (buttonIndex === 0) {
             console.info("Installing update...");
-            const subprocess = childProcess.spawn(assetLocalPath, {
-              detached: true,
-              stdio: "ignore",
-            });
+            const subprocess = childProcess.spawn(
+              this._buildUpdateRunCmd(assetLocalPath, platform, version),
+              {
+                detached: true,
+                stdio: "ignore",
+              }
+            );
             subprocess.unref();
             app.quit();
           }
         } catch (err) {
           console.error("Failed to download update: ", err);
-          dialog.showErrorBox(
-            "Не удалось скачать обновление :С",
-            err.toString()
-          );
+          dialog.showErrorBox(lp.updater.error, err.toString());
         }
       }
     }
@@ -258,6 +274,9 @@ class Ettie {
       width: 1200,
       height: 800,
       position: "center",
+      _args: {
+        additionalArguments: ["--resources-path=" + resourcesPath],
+      },
     });
 
     // Create chat window
@@ -267,7 +286,10 @@ class Ettie {
       x: this.display.workAreaSize.width / 2 - 200,
       y: this.display.workAreaSize.height - 480,
       _args: {
-        additionalArguments: ["--server-url=" + serverURL],
+        additionalArguments: [
+          "--server-url=" + serverURL,
+          "--resources-path=" + resourcesPath,
+        ],
       },
     });
 
@@ -279,7 +301,9 @@ class Ettie {
     await this.downloadDeps();
   }
 
-  async createTray() {
+  createTray() {
+    const lp = this.config ? lang[this.config.language] : lang["en"];
+
     this.tray = new Tray(
       nativeImage.createFromDataURL(
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAYxJREFUWEfNly1OBEEQhd8LCOAGWAwGT0g4AbdAg0FwCQQSyS04AQkCiwCD5wYgNvvIbHomszP9U9U9JIzdqq6vXver7iUcnySlwknSsdQQWkySdA7g2bq4FyQLkOs4B+SBSALUFu/BrBBRgNbiHUQ1wBLFPSpsKbBkcasKA4CkPQDfnsMl6RjAR4s1xwBJj+e6aZ0NGwBJOwBWme7XJLuY2bcUQFX3Ab5pOvYK/GuAfZI/XvkBvJI8LY1wlqyXGiiSHgFctjhgc7hrAEo51hngBpB0BuClKKvjajYpYOnYM36De3ZJrooApW7Hv1suoEkz74sBGIvfALjfgvbIG1PDUjhIfgTgc7pGtQLWwqH4HYDbaAOS1p0dLXvtKdqvV1K4eRTnwEvFAVybADyDpXRBTV1jBgiJDySvUl0bOh5S++00P0gsZ8QaMz5LY4AnABfWRWrjpgf5Tx+lM89H7oiZ/Tz76FDhgGT0wZv6Y/IG4MRRIBWafEsOl1ejj5Pp1qFlmoBGb3+RPPSq9gtFctRMs1E//wAAAABJRU5ErkJggg=="
@@ -288,7 +312,7 @@ class Ettie {
     this.tray.setToolTip("Ettie");
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: "Показать/Скрыть",
+        label: lp.tray.showHide,
         type: "normal",
         click: () => {
           if (this.view === "chat") {
@@ -299,11 +323,18 @@ class Ettie {
         },
       },
       {
-        label: "Выход",
+        label: lp.tray.quit,
         type: "normal",
         click: () => app.quit(),
       },
       { type: "separator" },
+      {
+        label: this.config
+          ? "token: ..." +
+            this.config.token.substr(this.config.token.length - 15)
+          : "unlogged",
+        type: "normal",
+      },
       {
         label: "v" + app.getVersion(),
         type: "normal",
@@ -311,6 +342,12 @@ class Ettie {
     ]);
     this.tray.setContextMenu(contextMenu);
     this.tray.on("click", () => contextMenu.items[0].click());
+  }
+
+  recreateTray() {
+    this.tray.destroy();
+    this.readConfig();
+    this.createTray();
   }
 
   changeView({ view, reload }) {
@@ -325,6 +362,15 @@ class Ettie {
     }
 
     this.view = view;
+    this.recreateTray();
+  }
+
+  _buildUpdateRunCmd(assetLocalPath, platform, version) {
+    if (platform === "win32") return assetLocalPath;
+    else if (platform === "darwin")
+      return `sudo hdiutil mount ${assetLocalPath} && sudo cp -R "/Volumes/Ettie ${version}/Ettie ${version}.app" /Applications`;
+    else if (platform === "linux")
+      return `chmod u+x ${assetLocalPath} && ${assetLocalPath}`;
   }
 }
 

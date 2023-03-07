@@ -4,27 +4,24 @@
 
     <div class="mb-2">
       <div>
-        <h4>Я могу ответить на любой вопрос</h4>
-        <p>Спроси меня о чем угодно, и я дам тебе ответ.</p>
+        <h4>{{ $t("whatCanIdo.response.title") }}</h4>
+        <p>{{ $t("whatCanIdo.response.subtitle") }}</p>
       </div>
       <div>
-        <h4>Я выполню команду</h4>
-        <p>Я могу выполнить команду, о которой ты меня попросишь.</p>
+        <h4>{{ $t("whatCanIdo.cmd.title") }}</h4>
+        <p>{{ $t("whatCanIdo.cmd.subtitle") }}</p>
       </div>
       <div>
-        <h4>Я нарисую картину</h4>
-        <p>Попроси меня нарисовать что-нибудь, и я с радостью это сделаю.</p>
+        <h4>{{ $t("whatCanIdo.paint.title") }}</h4>
+        <p>{{ $t("whatCanIdo.paint.subtitle") }}</p>
       </div>
       <div>
-        <h4>Я выполню за тебя работу</h4>
-        <p>Я могу написать за тебя эссе или сделать домашнее задание.</p>
+        <h4>{{ $t("whatCanIdo.work.title") }}</h4>
+        <p>{{ $t("whatCanIdo.work.subtitle") }}</p>
       </div>
       <div>
-        <h4>Я выключу свет</h4>
-        <p>
-          Я умею работать с устройствами умного дома от Xiaomi, Yeelight,
-          Philips, Bosch, Apple Home и др.
-        </p>
+        <h4>{{ $t("whatCanIdo.light.title") }}</h4>
+        <p>{{ $t("whatCanIdo.light.subtitle") }}</p>
       </div>
     </div>
     <div>
@@ -34,7 +31,7 @@
         style="width: 100%"
         @click="finishWhatCanIdo"
       >
-        Далее
+        {{ $t("btns.next") }}
       </button>
     </div>
   </div>

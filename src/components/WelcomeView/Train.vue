@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column align-items-center">
-    <h4>Обучение</h4>
+    <h4>{{ $t("train.header") }}</h4>
     <Transition>
       <h2 v-if="actionName">{{ actionName }}</h2>
     </Transition>
@@ -17,12 +17,6 @@ import welcomeViewStore from "@/stores/welcomeView.store";
 import windowStore from "@/stores/window.store";
 import { later } from "@/utils/later";
 
-const phrases = {
-  hello: "Етти, привет",
-  are_you_here: "Етти, ты здесь?",
-  callback: "Етти, отзовись",
-};
-
 export default {
   data() {
     return {
@@ -38,12 +32,14 @@ export default {
         await later(1000);
       }
 
-      this.actionName = `Скажи: "${phrases[word]}"`;
+      this.actionName = `${this.$t("train.say")}: "${this.$t(
+        `train.${word}`
+      )}"`;
       await this.collect(word);
     },
 
     async startTrain() {
-      this.actionName = "Подготовка к обучению...";
+      this.actionName = `${this.$t("train.preparing")}...`;
       window.onEpochChange = (e, m) => {
         this.trainPerc = Math.round((e / m) * 100);
       };
@@ -51,7 +47,7 @@ export default {
       await this.collect("_background_noise_");
       await this.collect("_background_noise_");
 
-      this.actionName = "Обучаюсь...";
+      this.actionName = `${this.$t("train.trainingInProg")}...`;
       await this.rai.train();
     },
 

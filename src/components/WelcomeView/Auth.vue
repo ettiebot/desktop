@@ -1,7 +1,27 @@
 <template>
   <div class="d-flex flex-column align-items-center">
     <div class="pb-5"><img src="@/assets/logo.svg" width="200" /></div>
-    <div v-if="stage === 0">
+    <div v-if="stage === 0" style="min-width: 200px">
+      <div class="mb-2">
+        <select class="form-select" v-model="language">
+          <option value="" selected>{{ $t("settings.chooseLang") }}</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+          <option value="ua">Українська</option>
+        </select>
+      </div>
+      <div>
+        <button
+          type="button"
+          class="btn btn-light"
+          style="width: 100%"
+          @click="changeStage(1)"
+        >
+          {{ $t("btns.next") }}
+        </button>
+      </div>
+    </div>
+    <div v-if="stage === 1">
       <div class="mb-2">
         <button
           type="button"
@@ -9,7 +29,7 @@
           style="width: 100%"
           @click="createKey"
         >
-          Создать новый ключ
+          {{ $t("auth.newKey") }}
         </button>
       </div>
       <div>
@@ -17,16 +37,16 @@
           type="button"
           class="btn btn-light"
           style="width: 100%"
-          @click="changeStage(2)"
+          @click="changeStage(3)"
         >
-          Импортировать ключ
+          {{ $t("auth.importKey") }}
         </button>
       </div>
     </div>
-    <div v-if="stage === 1">
+    <div v-if="stage === 2">
       <div class="mb-3">
         <div class="alert alert-danger" role="alert">
-          Скопируй ключ в надёжное место
+          {{ $t("auth.plsCopyKey") }}
         </div>
       </div>
       <div class="mb-2">
@@ -46,22 +66,22 @@
           style="width: 100%; margin-right: 7px"
           @click="finishAuth(true)"
         >
-          Далее
+          {{ $t("btns.next") }}
         </button>
         <button
           type="button"
           class="btn btn-light"
           style="width: 100%"
-          @click="changeStage(0)"
+          @click="changeStage(1)"
         >
-          Назад
+          {{ $t("btns.back") }}
         </button>
       </div>
     </div>
-    <div v-if="stage === 2">
+    <div v-if="stage === 3">
       <div class="mb-3">
         <div class="alert alert-danger" role="alert">
-          Введи ключ в поле ниже
+          {{ $t("auth.enterKeyBelow") }}
         </div>
       </div>
       <div class="mb-2">
@@ -79,15 +99,15 @@
           style="width: 100%; margin-right: 7px"
           @click="importKey"
         >
-          Далее
+          {{ $t("btns.next") }}
         </button>
         <button
           type="button"
           class="btn btn-light"
           style="width: 100%"
-          @click="changeStage(0)"
+          @click="changeStage(1)"
         >
-          Назад
+          {{ $t("btns.back") }}
         </button>
       </div>
     </div>
@@ -104,21 +124,29 @@ export default {
       config: configStore.config,
       stage: 0,
       mnemonic: "",
+      language: "",
     };
+  },
+  watch: {
+    language(l) {
+      this.$i18n.locale = l;
+    },
   },
   methods: {
     changeStage(i) {
+      if (!this.language || this.language === "") return;
       this.mnemonic = "";
       this.stage = i;
     },
 
     copyMnemonic() {
       this.$refs.mnemonicInput.select();
-      // nw.Clipboard.get().set({ data: this.mnemonic, type: "text" });
+      const { clipboard } = this.require("electron");
+      clipboard.writeText(this.mnemonic);
     },
 
     createKey() {
-      this.changeStage(1);
+      this.changeStage(2);
       this.mnemonic = bip39.generateMnemonic();
       welcomeViewStore.authToken = bip39
         .mnemonicToSeedSync(this.mnemonic)
@@ -128,7 +156,7 @@ export default {
     importKey() {
       const mnemonic = this.$refs.mnemonicInputImport.value;
       if (!bip39.validateMnemonic(mnemonic)) {
-        alert("Неверный ключ");
+        alert(this.$t("errors.invalidKey"));
       } else {
         welcomeViewStore.authToken = bip39
           .mnemonicToSeedSync(mnemonic)
@@ -138,6 +166,7 @@ export default {
     },
 
     finishAuth(isNew) {
+      welcomeViewStore.language = this.language;
       if (isNew) welcomeViewStore.state = "settings";
       else welcomeViewStore.state = "whatCanIdo";
     },
