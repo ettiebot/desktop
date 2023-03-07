@@ -22,6 +22,7 @@ import { createWriteStream, existsSync, unlinkSync } from "fs";
 
 const branch = "dev";
 const dlServerURL = "https://dl.ettie.uk";
+const releaseBaseURL = "https://github.com/ettiebot/desktop/releases/download";
 const versionsURL = `${dlServerURL}/versions.json`;
 
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -161,10 +162,21 @@ class Ettie {
 
           // Download the installer
           const assetLocalPath = join(process.resourcesPath, verPlatform.name);
-          await this.downloadFile(
-            `${dlServerURL}/${branch}/${version}/${verPlatform.name}`,
-            assetLocalPath
-          );
+          const updateBaseURL = `${releaseBaseURL}/v${version}/Ettie`;
+
+          let updateURL;
+          if (platform === "win32") {
+            updateURL = `${updateBaseURL}-Setup-${version}.exe`;
+          } else if (platform === "darwin") {
+            updateURL = `${updateBaseURL}-${version}.dmg`;
+          } else if (platform === "linux") {
+            updateURL = `${updateBaseURL}-${version}.AppImage`;
+          } else {
+            return;
+          }
+
+          // Download update file
+          await this.downloadFile(updateURL, assetLocalPath);
 
           // Download dependencies
           await this.downloadDeps();
