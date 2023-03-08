@@ -29,12 +29,12 @@ class RecognitionAI {
 
     // Train model with examples
     await this.transferRecognizer.train({
-      epochs: 1500,
+      epochs: 2500,
       validationSplit: 0.1,
       fineTuningEpochs: 500,
       callback: {
         onEpochEnd: async (epoch, logs) => {
-          window.onEpochChange(epoch, 1500);
+          window.onEpochChange(epoch, 2500);
           console.log(
             `Epoch ${epoch}: loss=${logs.loss}, accuracy=${logs.acc}`
           );
@@ -64,22 +64,15 @@ class RecognitionAI {
   // Listen microphone
   async listen(cb) {
     await this.transferRecognizer.listen((result) => {
-      // - result.scores contains the scores for the new vocabulary, which
-      //   can be checked with:
       const words = this.transferRecognizer.wordLabels();
-
-      console.log(result);
 
       const mostLikelyResultIndex = result.scores.indexOf(
         Math.max.apply(null, result.scores)
       );
 
       const mostLikelyWord = words[mostLikelyResultIndex];
-
-      if (result.scores[mostLikelyResultIndex] < 0.97) return;
-
+      if (result.scores[mostLikelyResultIndex] < 0.98) return;
       console.log(mostLikelyWord, result.scores[mostLikelyResultIndex]);
-
       cb(mostLikelyWord);
     });
   }

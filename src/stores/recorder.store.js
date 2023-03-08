@@ -13,7 +13,7 @@ export default reactive({
   btnScale: "scale(1)",
 
   speechDetectConfig: {
-    threshold: -83,
+    threshold: -80,
     sendVoiceTimeout: 500,
   },
 

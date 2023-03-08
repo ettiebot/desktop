@@ -3,16 +3,7 @@ import { reactive } from "vue";
 import configStore from "./config.store";
 import recorderStore from "./recorder.store";
 import soundsStore from "./sounds.store";
-import {
-  executeFindInSearchCmd,
-  executeFindTriggerCmd,
-  executeLockPCCmd,
-  executeOpenBrowserPCCmd,
-  executeOpenSiteCmd,
-  executeRestartPCCmd,
-  executeShutdownPCCmd,
-  executeSoundCmd,
-} from "@/actions/executeCmds.js";
+import { executeCommand } from "@/actions/executeCmds.js";
 
 export default reactive({
   socket: null,
@@ -76,17 +67,13 @@ export default reactive({
   async onAuth(user) {
     if (user) {
       recorderStore.state = null;
-      Object.assign(this.data.user, {
-        user,
-        history: user.history ?? [],
-      });
+      this.data.user = user;
     }
   },
 
   async onResponse(res) {
     // Execute command or push result to history
-    if (res.cmds) this.onCommandPayload(res.cmds, res.result);
-    else this.data.history.push(res.result);
+    this.data.history.push(res.result);
   },
 
   async onBuffer(buf) {
@@ -122,19 +109,10 @@ export default reactive({
     this.socket.send(voice);
   },
 
-  async onCommandPayload(res, payload = {}) {
-    const { type, act, opts } = res;
+  async onCommandPayload(res) {
+    const { intentName, parameters, data } = res;
     try {
-      if (type === "sound") await executeSoundCmd(act, opts);
-      else if (type === "shutdown-pc") await executeShutdownPCCmd();
-      else if (type === "restart-pc") await executeRestartPCCmd();
-      else if (type === "open-browser") await executeOpenBrowserPCCmd(act);
-      else if (type === "lock-pc") await executeLockPCCmd();
-      else if (type === "find-in-search")
-        await executeFindInSearchCmd(act, opts);
-      else if (type === "find-trigger")
-        await executeFindTriggerCmd(payload, opts);
-      else if (type === "open-site") await executeOpenSiteCmd(act, opts);
+      await executeCommand(intentName, parameters, data);
     } catch (e) {
       console.error(e);
     }
