@@ -71,7 +71,7 @@ class RecognitionAI {
       );
 
       const mostLikelyWord = words[mostLikelyResultIndex];
-      if (result.scores[mostLikelyResultIndex] < 0.98) return;
+      if (result.scores[mostLikelyResultIndex] < 0.985) return;
       console.log(mostLikelyWord, result.scores[mostLikelyResultIndex]);
       cb(mostLikelyWord);
     });
