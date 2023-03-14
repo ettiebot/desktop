@@ -31,8 +31,8 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 const { platform } = process;
 
 const serverURL = isDevelopment
-  ? "ws://localhost:3001"
-  : "wss://api.ettie.uk/appws";
+  ? "http://localhost:3001"
+  : "https://api.ettie.uk";
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([

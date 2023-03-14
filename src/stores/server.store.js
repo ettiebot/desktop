@@ -1,112 +1,65 @@
-import b64arb from "../utils/b64arb.utils.js";
 import { reactive } from "vue";
 import configStore from "./config.store";
-import recorderStore from "./recorder.store";
 import soundsStore from "./sounds.store";
 import { executeCommand } from "@/actions/executeCmds.js";
+import axios from "axios";
+import recorderStore from "./recorder.store.js";
 
 export default reactive({
-  socket: null,
   data: {
     history: [],
     user: null,
   },
 
+  api: null,
+
   async init() {
     if (!configStore.config?.token) return;
-
-    const serverURL = window.process.argv
-      .find((a) => a.includes("server-url"))
-      ?.split("=")[1];
-    if (!serverURL) return;
-
-    this.socket = new WebSocket(
-      [
-        serverURL,
-        "?" +
-          new URLSearchParams({
-            uid: configStore.config.token,
-            lang: configStore.config.language,
-            useTranslate: configStore.config.useTranslate,
-            useHistory: configStore.config.useHistory,
-          }).toString(),
-      ].join("/"),
-      "echo-protocol"
-    );
-
-    this.socket.onmessage = this.onMessage.bind(this);
-    this.socket.onclose = this.onDisconnection.bind(this);
-    this.socket.onerror = this.onDisconnection.bind(this);
+    this.api = axios.create({
+      baseURL:
+        window.process.argv
+          .find((a) => a.includes("server-url"))
+          ?.split("=")[1] + "/api",
+      headers: {
+        "x-token": configStore.config.token,
+      },
+    });
+    recorderStore.state = null;
   },
 
-  onDisconnection() {
-    recorderStore.state = "unready";
-  },
+  async synthText(text) {
+    const payload = { t: Buffer.from(text, "utf8").toString("base64") };
 
-  handleMessage(payload) {
-    const data = payload[1];
-    switch (payload[0]) {
-      case "auth":
-        this.onAuth(data);
-        break;
-      case "response":
-        recorderStore.state = null;
-        this.onResponse(data);
-        break;
-      case "cmd":
-        recorderStore.state = null;
-        this.onCommandPayload(data);
-        break;
-      case "error":
-        recorderStore.state = null;
-        this.onError(data);
-        break;
-    }
-  },
+    const b64 = await this.api
+      .post("/synth", payload)
+      .then((res) => res.data.s);
 
-  async onAuth(user) {
-    if (user) {
-      recorderStore.state = null;
-      this.data.user = user;
-    }
-  },
-
-  async onResponse(res) {
-    // Execute command or push result to history
-    this.data.history.push(res.result);
-  },
-
-  async onBuffer(buf) {
-    soundsStore.playExt(
-      `data:audio/ogg;base64,${b64arb(await buf.arrayBuffer())}`
-    );
-  },
-
-  onError(e) {
-    switch (e) {
-      case "no_results":
-        this.data.history.push({
-          text: configStore.$("errors.noResults"),
-        });
-        break;
-      default:
-        this.data.history.push({
-          text: configStore.$("errors.unknown"),
-        });
-        throw new Error(e);
-    }
-  },
-
-  onMessage(e) {
-    if (typeof e.data === "string") {
-      this.handleMessage(JSON.parse(e.data));
-    } else {
-      this.onBuffer(e.data);
-    }
+    soundsStore.playExt(`data:audio/ogg;base64,${b64}`);
   },
 
   async sendVoice(voice) {
-    this.socket.send(voice);
+    const form = new FormData();
+    form.append("file", new Blob([voice], { type: "audio/ogg" }));
+
+    this.api
+      .post("/voice", form)
+      .then((res) => res.data)
+      .then((res) => {
+        if (res.intentName) {
+          this.onCommandPayload(res);
+        } else {
+          this.data.history.push(res.result);
+          return this.synthText(res.result.text);
+        }
+      })
+      .then(() => (recorderStore.state = null))
+      .catch((e) => {
+        recorderStore.state = null;
+        this.data.history.push({
+          query: ":(",
+          text: e.response.data?.message ?? "Unknown error",
+        });
+      });
   },
 
   async onCommandPayload(res) {
