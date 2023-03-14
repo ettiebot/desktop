@@ -83,6 +83,7 @@
 <script>
 import welcomeViewStore from "@/stores/welcomeView.store";
 import hardwareStore from "@/stores/hardware.store";
+import serverStore from "@/stores/server.store";
 
 export default {
   data() {
@@ -111,7 +112,21 @@ export default {
       this.stage = stage;
     },
 
-    finishSettings() {
+    async finishSettings() {
+      await serverStore.api.post(
+        "/memorize",
+        {
+          lang: welcomeViewStore.language,
+          useHistory: welcomeViewStore.useHistory,
+          useTranslate: welcomeViewStore.useTranslate,
+        },
+        {
+          headers: {
+            "x-token": welcomeViewStore.authToken,
+          },
+        }
+      );
+
       welcomeViewStore.state = "whatCanIdo";
     },
   },

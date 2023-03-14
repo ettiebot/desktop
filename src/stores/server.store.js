@@ -11,19 +11,17 @@ export default reactive({
     user: null,
   },
 
-  api: null,
+  api: axios.create({
+    baseURL:
+      window.process.argv.find((a) => a.includes("server-url"))?.split("=")[1] +
+      "/api",
+    headers: {
+      "x-token": configStore.config?.token,
+    },
+  }),
 
   async init() {
     if (!configStore.config?.token) return;
-    this.api = axios.create({
-      baseURL:
-        window.process.argv
-          .find((a) => a.includes("server-url"))
-          ?.split("=")[1] + "/api",
-      headers: {
-        "x-token": configStore.config.token,
-      },
-    });
     recorderStore.state = null;
   },
 
@@ -54,10 +52,11 @@ export default reactive({
       })
       .then(() => (recorderStore.state = null))
       .catch((e) => {
+        console.error(e);
         recorderStore.state = null;
         this.data.history.push({
           query: ":(",
-          text: e.response.data?.message ?? "Unknown error",
+          text: e.response?.data?.message ?? "Unknown error",
         });
       });
   },

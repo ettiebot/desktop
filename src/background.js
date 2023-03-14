@@ -275,7 +275,10 @@ class Ettie {
       height: 800,
       position: "center",
       _args: {
-        additionalArguments: ["--resources-path=" + resourcesPath],
+        additionalArguments: [
+          "--server-url=" + serverURL,
+          "--resources-path=" + resourcesPath,
+        ],
       },
     });
 
