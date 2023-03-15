@@ -37,9 +37,9 @@ jobs:
           # Use Vue CLI
           use_vue_cli: true
 
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@main
+      - name: Extract version
+        id: extract_version
+        uses: Saionaro/extract-package-version@v1.2.1
 
       - name: Upload to Update API
         uses: bxb100/action-upload-webdav@v1
@@ -47,7 +47,7 @@ jobs:
           webdav_address: ${{secrets.webdav_address}}
           webdav_username: ${{secrets.webdav_username}}
           webdav_password: ${{secrets.webdav_password}}
-          webdav_upload_path: /REL/ettie/builds/${{ steps.package-version.outputs.current-version}}
+          webdav_upload_path: /REL/ettie/builds/${{ steps.extract_version.outputs.version }}
           files: "./dist_electron/Ettie-*"
           keep_structure: false
         env:
