@@ -32,9 +32,17 @@ jobs:
           github_token: ${{ secrets.github_token }}
 
           # Always release a new version
-          release: true # ${{ startsWith(github.ref, 'refs/tags/v') }}
+          release: false # ${{ startsWith(github.ref, 'refs/tags/v') }}
 
           # Use Vue CLI
           use_vue_cli: true
+      - name: Upload to Update API
+        uses: bxb100/action-upload-webdav@v1
+        with:
+          webdav_address: ${{secrets.WEBDAV_ADDRESS}}
+          webdav_username: ${{secrets.WEBDAV_USERNAME}}
+          webdav_password: ${{secrets.WEBDAV_PASSWORD}}
+          webdav_upload_path: "/REL/ettie/builds"
+          files: "./dist_electron/**"
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
