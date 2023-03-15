@@ -48,7 +48,9 @@ jobs:
           webdav_username: ${{secrets.webdav_username}}
           webdav_password: ${{secrets.webdav_password}}
           webdav_upload_path: /REL/ettie/builds/${{ steps.extract_version.outputs.version }}
-          files: "./dist_electron/Ettie*"
+          files: |
+            ./dist_electron/Ettie*
+            ./dist_electron/*.exe
           keep_structure: false
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
