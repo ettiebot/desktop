@@ -36,13 +36,19 @@ jobs:
 
           # Use Vue CLI
           use_vue_cli: true
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+
       - name: Upload to Update API
         uses: bxb100/action-upload-webdav@v1
         with:
           webdav_address: ${{secrets.webdav_address}}
           webdav_username: ${{secrets.webdav_username}}
           webdav_password: ${{secrets.webdav_password}}
-          webdav_upload_path: "/REL/ettie/builds"
-          files: "./dist_electron/**"
+          webdav_upload_path: /REL/ettie/builds/${{ steps.package-version.outputs.current-version}}
+          files: "./dist_electron/Ettie-*"
+          keep_structure: false
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
