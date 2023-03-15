@@ -9,7 +9,6 @@ import {
   Tray,
   nativeImage,
   Menu,
-  dialog,
 } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
@@ -17,27 +16,22 @@ import * as pcPower from "electron-shutdown-command";
 import loudness from "../loudness";
 import axios from "axios";
 import { join } from "path";
-import childProcess from "child_process";
 import { createWriteStream, existsSync, readFileSync, unlinkSync } from "fs";
 import { resourcesPath } from "process";
 import lang from "./lang";
 
-const branch = "dev";
-const dlServerURL = "https://dl.ettie.uk";
-const releaseBaseURL = "https://github.com/ettiebot/desktop/releases/download";
-const versionsURL = `${dlServerURL}/versions.json`;
-
 const isDevelopment = process.env.NODE_ENV !== "production";
 const { platform } = process;
-
-const serverURL = isDevelopment
-  ? "http://localhost:3001"
-  : "https://api.ettie.uk";
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } },
 ]);
+
+const dlServerURL = "https://dl.ettie.uk";
+const serverURL = isDevelopment
+  ? "http://localhost:3001"
+  : "https://api.ettie.uk";
 
 class Ettie {
   constructor() {
@@ -86,24 +80,18 @@ class Ettie {
 
   async downloadDeps() {
     try {
-      // Download dependencies for Windows
-      const { data: versions } = await axios.get(versionsURL, {
+      // Download dependencies
+      const { data: deps } = await axios.get(`${dlServerURL}/deps.json`, {
         responseType: "json",
       });
 
-      const verBranch = versions[branch];
-      const verPlatform = verBranch[platform];
-      if (!verPlatform) return;
+      const depsPlatform = deps[platform];
+      console.info("Found dependencies: ", depsPlatform);
 
-      console.info("Found dependencies: ", verPlatform.deps.join(", "));
-
-      for (const dep of verPlatform.deps) {
+      for (const dep of depsPlatform) {
         const depPath = join(process.resourcesPath, dep);
         if (!existsSync(depPath)) {
-          await this.downloadFile(
-            `${dlServerURL}/${branch}/deps/${dep}`,
-            depPath
-          );
+          await this.downloadFile(`${dlServerURL}/deps/${dep}`, depPath);
           console.info("Downloaded dependency: ", dep);
         }
       }
@@ -126,7 +114,10 @@ class Ettie {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
-        ...(params._args || {}),
+        additionalArguments: [
+          "--server-url=" + serverURL,
+          "--resources-path=" + resourcesPath,
+        ],
       },
     });
 
@@ -153,75 +144,6 @@ class Ettie {
     }
 
     return win;
-  }
-
-  async checkForUpdates() {
-    const lp = this.config ? lang[this.config.language] : lang["en"];
-
-    const { data: versions } = await axios.get(versionsURL, {
-      responseType: "json",
-    });
-
-    const verBranch = versions[branch];
-    const version = verBranch._version;
-    const verPlatform = verBranch[platform];
-    console.info(verPlatform, version, verBranch);
-
-    if (verPlatform) {
-      // If the latest release is not the current version
-      if (
-        Number(version.replace(/[^a-zA-Z0-9 ]/g, "")) >
-        Number(app.getVersion().replace(/[^a-zA-Z0-9 ]/g, ""))
-      ) {
-        try {
-          console.log(`New version available, downloading v${version}...`);
-
-          // Download the installer
-          const assetLocalPath = join(process.resourcesPath, verPlatform.name);
-          const updateBaseURL = `${releaseBaseURL}/v${version}/Ettie`;
-
-          let updateURL;
-          if (platform === "win32") {
-            updateURL = `${updateBaseURL}-Setup-${version}.exe`;
-          } else if (platform === "darwin") {
-            updateURL = `${updateBaseURL}-${version}.dmg`;
-          } else if (platform === "linux") {
-            updateURL = `${updateBaseURL}-${version}.AppImage`;
-          } else {
-            return;
-          }
-
-          // Download update file
-          await this.downloadFile(updateURL, assetLocalPath);
-
-          // Download dependencies
-          await this.downloadDeps();
-
-          const buttonIndex = dialog.showMessageBoxSync({
-            message: lp.updater.available,
-            buttons: [lp.updater.yes, lp.updater.no],
-          });
-
-          if (buttonIndex === 0) {
-            console.info("Installing update...");
-            const subprocess = childProcess.spawn(
-              this._buildUpdateRunCmd(assetLocalPath, platform, version),
-              {
-                detached: true,
-                stdio: "ignore",
-              }
-            );
-            subprocess.unref();
-            app.quit();
-          }
-        } catch (err) {
-          console.error("Failed to download update: ", err);
-          dialog.showErrorBox(lp.updater.error, err.toString());
-        }
-      }
-    }
-
-    setTimeout(() => this.checkForUpdates(), 120 * 1000);
   }
 
   async listenIPC() {
@@ -274,12 +196,6 @@ class Ettie {
       width: 1200,
       height: 800,
       position: "center",
-      _args: {
-        additionalArguments: [
-          "--server-url=" + serverURL,
-          "--resources-path=" + resourcesPath,
-        ],
-      },
     });
 
     // Create chat window
@@ -288,18 +204,10 @@ class Ettie {
       height: 500,
       x: this.display.workAreaSize.width / 2 - 200,
       y: this.display.workAreaSize.height - 480,
-      _args: {
-        additionalArguments: [
-          "--server-url=" + serverURL,
-          "--resources-path=" + resourcesPath,
-        ],
-      },
     });
 
     // Create tray
     await this.createTray();
-    // Check for updates
-    await this.checkForUpdates();
     // Download dependencies
     await this.downloadDeps();
   }
@@ -366,14 +274,6 @@ class Ettie {
 
     this.view = view;
     this.recreateTray();
-  }
-
-  _buildUpdateRunCmd(assetLocalPath, platform, version) {
-    if (platform === "win32") return assetLocalPath;
-    else if (platform === "darwin")
-      return `sudo hdiutil mount ${assetLocalPath} && sudo cp -R "/Volumes/Ettie ${version}/Ettie ${version}.app" /Applications`;
-    else if (platform === "linux")
-      return `chmod u+x ${assetLocalPath} && ${assetLocalPath}`;
   }
 }
 

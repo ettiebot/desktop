@@ -15,12 +15,16 @@ module.exports = defineConfig({
   // },
   pluginOptions: {
     electronBuilder: {
+      productName: "Ettie",
       appId: "com.ettiebot.ettie",
-      copyright: "Copyright © 2023 ettie.uk",
-      extraResources: ["loudness/**/*"],
+      copyright: "Copyright © 2023, ettie.uk",
       mac: {
         category: "public.app-category.entertainment",
-        target: "pkg",
+        target: "dmg",
+      },
+      win: {
+        artifactName: "Ettie-${version}.${ext}",
+        target: "nsis",
       },
     },
   },
